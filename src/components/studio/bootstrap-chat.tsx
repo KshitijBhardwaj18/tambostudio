@@ -3,7 +3,8 @@
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/lib/studio-store";
 import { STUDIO_TEMPLATES } from "@/lib/studio-templates";
-import { ArrowRight, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
 
 export const BootstrapChat: React.FC<{ className?: string }> = ({ className }) => {
@@ -69,11 +70,16 @@ Click "Continue to Builder" to customize your app.`;
       {/* Header */}
       <div className="border-b border-border p-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <Image
+            src="/Octo-Icon.svg"
+            alt="TamboStudio"
+            width={24}
+            height={24}
+          />
           <h2 className="font-semibold">Create Your AI App</h2>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Describe what you want to build
+          Describe what you want to build in natural language
         </p>
       </div>
       
@@ -82,8 +88,8 @@ Click "Continue to Builder" to customize your app.`;
         {!hasMessages && (
           <div className="space-y-6">
             <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <Zap className="h-8 w-8 text-primary" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#7FFFC3]/10 mb-4">
+                <Zap className="h-8 w-8 text-[#7FFFC3]" />
               </div>
               <h3 className="text-lg font-medium mb-2">What would you like to build?</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
@@ -97,18 +103,18 @@ Click "Continue to Builder" to customize your app.`;
                 <button
                   key={template.id}
                   onClick={() => handleQuickStart(template.id)}
-                  className="flex items-start gap-3 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition-all text-left group"
+                  className="flex items-start gap-3 p-4 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-accent/50 transition-all text-left group"
                 >
                   <span className="text-2xl">{template.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium group-hover:text-primary transition-colors">
+                    <div className="font-medium group-hover:text-[#7FFFC3] transition-colors">
                       {template.name}
                     </div>
                     <div className="text-sm text-muted-foreground line-clamp-1">
                       {template.description}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-[#7FFFC3] transition-colors mt-1" />
                 </button>
               ))}
             </div>
@@ -133,7 +139,7 @@ Click "Continue to Builder" to customize your app.`;
               className={cn(
                 "max-w-[80%] rounded-lg px-4 py-2",
                 msg.role === "user"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-[#7FFFC3] text-gray-900"
                   : "bg-muted"
               )}
             >
@@ -155,9 +161,9 @@ Click "Continue to Builder" to customize your app.`;
             <div className="bg-muted rounded-lg px-4 py-2">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                  <span className="w-2 h-2 bg-[#7FFFC3] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-2 h-2 bg-[#7FFFC3] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-2 h-2 bg-[#7FFFC3] rounded-full animate-bounce" />
                 </div>
                 <span className="text-sm text-muted-foreground">Generating...</span>
               </div>
@@ -173,7 +179,7 @@ Click "Continue to Builder" to customize your app.`;
         <div className="p-4 border-t border-border">
           <button
             onClick={() => setView("builder")}
-            className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-[#7FFFC3] text-gray-900 rounded-lg font-medium hover:bg-[#6ee6b0] transition-colors flex items-center justify-center gap-2"
           >
             Continue to Builder
             <ArrowRight className="h-4 w-4" />
@@ -189,13 +195,13 @@ Click "Continue to Builder" to customize your app.`;
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Build me an AI that helps manage support tickets..."
-            className="flex-1 px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            className="flex-1 px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#7FFFC3]/50 text-sm"
             disabled={isGenerating}
           />
           <button
             type="submit"
             disabled={!input.trim() || isGenerating}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[#7FFFC3] text-gray-900 rounded-lg font-medium hover:bg-[#6ee6b0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowRight className="h-4 w-4" />
           </button>

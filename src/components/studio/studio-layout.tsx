@@ -6,7 +6,9 @@ import { BootstrapChat } from "./bootstrap-chat";
 import { ConfigSidebar } from "./config-sidebar";
 import { CodePreview } from "./code-preview";
 import { LivePreview } from "./live-preview";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 
 export const StudioLayout: React.FC<{ className?: string }> = ({ className }) => {
@@ -15,14 +17,17 @@ export const StudioLayout: React.FC<{ className?: string }> = ({ className }) =>
   return (
     <div className={cn("h-screen flex flex-col bg-background", className)}>
       {/* Top Header */}
-      <header className="h-14 border-b border-border flex items-center justify-between px-4">
+      <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">Tambo Studio</span>
-          </div>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Image
+              src="/Octo-Icon.svg"
+              alt="TamboStudio"
+              width={32}
+              height={32}
+            />
+            <span className="font-bold text-lg">TamboStudio</span>
+          </Link>
           {view === "builder" && (
             <button
               onClick={() => setView("bootstrap")}
@@ -33,10 +38,10 @@ export const StudioLayout: React.FC<{ className?: string }> = ({ className }) =>
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {selectedTemplate && (
             <span className="text-sm text-muted-foreground">
-              Template: <span className="font-medium text-foreground">{selectedTemplate.name}</span>
+              Building: <span className="font-medium text-foreground">{selectedTemplate.name}</span>
             </span>
           )}
           <button

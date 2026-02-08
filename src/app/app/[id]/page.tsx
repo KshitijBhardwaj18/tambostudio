@@ -6,9 +6,11 @@ import { TamboProvider } from "@tambo-ai/react";
 import { TamboMcpProvider } from "@tambo-ai/react/mcp";
 import { useLaunchedApp } from "@/lib/studio-store";
 import { components, tools, getToolsForTemplate, getComponentsForTemplate } from "@/lib/tambo";
-import { ArrowLeft, Sparkles, Info } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { LaunchedAppChat } from "@/components/studio/launched-app-chat";
+import Image from "next/image";
+import Link from "next/link";
 
 const STORAGE_KEY = "tambo-launched-app-context";
 
@@ -80,10 +82,10 @@ export default function LaunchedAppPage() {
         </div>
         <button
           onClick={() => router.push("/studio")}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#7FFFC3] text-gray-900 rounded-lg hover:bg-[#6ee6b0] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Go to Studio
+          Go to TamboStudio
         </button>
       </div>
     );
@@ -102,23 +104,25 @@ export default function LaunchedAppPage() {
             Back to Studio
           </button>
           <div className="h-6 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-            </div>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Image
+              src="/Octo-Icon.svg"
+              alt="TamboStudio"
+              width={28}
+              height={28}
+            />
             <span className="font-semibold">{launchedApp.name}</span>
-          </div>
+          </Link>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowSystemPrompt(!showSystemPrompt)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Info className="h-3.5 w-3.5" />
             {showSystemPrompt ? "Hide" : "Show"} System Prompt
           </button>
           <span className="text-xs text-muted-foreground">
-            Powered by Tambo
+            Powered by <a href="https://tambo.co" target="_blank" rel="noopener noreferrer" className="text-[#7FFFC3] hover:underline">Tambo</a>
           </span>
         </div>
       </header>
