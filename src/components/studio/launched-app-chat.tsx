@@ -78,38 +78,51 @@ export const LaunchedAppChat: React.FC<LaunchedAppChatProps> = ({
   const template = STUDIO_TEMPLATES.find((t) => t.id === appConfig.templateId);
 
   return (
-    <div className={cn("flex h-full w-full", className)}>
-      <ThreadContainer disableSidebarSpacing className="flex-1">
-        <ScrollableMessageContainer className="p-4">
-          {/* Welcome message */}
-          <div className="max-w-2xl mx-auto mb-6">
-            <div className="bg-muted/50 rounded-lg p-4 border border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">{template?.icon || "🤖"}</span>
-                <h2 className="font-semibold">{appConfig.name}</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {template?.description || "Your AI-powered assistant is ready to help."}
-              </p>
-              <div className="mt-3 pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground">
-                  <strong>Enabled tools:</strong>{" "}
-                  {appConfig.enabledMcpServers.length > 0
-                    ? appConfig.enabledMcpServers.join(", ")
-                    : "Default tools"}
-                </p>
+    <div className={cn("flex h-full w-full justify-center", className)}>
+      <div className="w-full max-w-4xl flex flex-col h-full">
+        <ThreadContainer disableSidebarSpacing className="flex-1">
+          <ScrollableMessageContainer className="p-4">
+            {/* Welcome message */}
+            <div className="mb-6">
+              <div className="bg-muted/50 rounded-xl p-5 border border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">{template?.icon || "🤖"}</span>
+                  <div>
+                    <h2 className="font-semibold text-lg">{appConfig.name}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {template?.description || "Your AI-powered assistant is ready to help."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
+                  {appConfig.enabledComponents.slice(0, 4).map((comp) => (
+                    <span key={comp} className="px-2 py-1 bg-[#7FFFC3]/10 text-[#7FFFC3] rounded-md text-xs font-medium">
+                      {comp}
+                    </span>
+                  ))}
+                  {appConfig.enabledMcpServers.slice(0, 2).map((server) => (
+                    <span key={server} className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-md text-xs font-medium">
+                      {server}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          <ThreadContent>
-            <ThreadContentMessages />
-          </ThreadContent>
-        </ScrollableMessageContainer>
+            <ThreadContent>
+              <ThreadContentMessages />
+            </ThreadContent>
+          </ScrollableMessageContainer>
 
-        {/* Message input */}
-        <div className="px-4 pb-4">
-          <div className="max-w-2xl mx-auto">
+          {/* Message suggestions */}
+          <MessageSuggestions initialSuggestions={suggestions}>
+            <div className="px-4 pb-2">
+              <MessageSuggestionsList />
+            </div>
+          </MessageSuggestions>
+
+          {/* Message input */}
+          <div className="px-4 pb-4">
             <MessageInput>
               <MessageInputTextarea placeholder={`Ask ${appConfig.name} anything...`} />
               <MessageInputToolbar>
@@ -118,15 +131,8 @@ export const LaunchedAppChat: React.FC<LaunchedAppChatProps> = ({
               <MessageInputError />
             </MessageInput>
           </div>
-        </div>
-
-        {/* Message suggestions */}
-        <MessageSuggestions initialSuggestions={suggestions}>
-          <div className="max-w-2xl mx-auto px-4 pb-4">
-            <MessageSuggestionsList />
-          </div>
-        </MessageSuggestions>
-      </ThreadContainer>
+        </ThreadContainer>
+      </div>
     </div>
   );
 };
