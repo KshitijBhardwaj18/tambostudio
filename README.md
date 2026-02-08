@@ -27,6 +27,15 @@ Build AI-powered applications in minutes using natural language. Describe what y
    ```
 5. Open [http://localhost:3000](http://localhost:3000)
 
+## Deploy on Vercel
+
+1. Push your code to GitHub and import the project in [Vercel](https://vercel.com).
+2. Set the **Root Directory** to this app folder (e.g. `tambostudio`) if it lives in a monorepo.
+3. Add environment variables in Vercel → Project → Settings → Environment Variables:
+   - `NEXT_PUBLIC_TAMBO_API_KEY` – your Tambo API key (from [tambo.co/dashboard](https://tambo.co/dashboard))
+   - `NEXT_PUBLIC_TAMBO_URL` (optional) – Tambo API base URL if you use a custom endpoint
+4. Deploy. The build uses `outputFileTracingRoot` so monorepos and multiple lockfiles are handled correctly.
+
 ## Usage
 
 1. Go to `/studio` or click "Open Studio" from the landing page

@@ -204,7 +204,10 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
       return (
         <div
           ref={ref}
-          className={cn(graphVariants({ variant, size: effectiveSize }), className)}
+          className={cn(
+            graphVariants({ variant, size: effectiveSize }),
+            className,
+          )}
           {...props}
         >
           <div className="p-4 h-full flex items-center justify-center">
@@ -235,7 +238,10 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
       return (
         <div
           ref={ref}
-          className={cn(graphVariants({ variant, size: effectiveSize }), className)}
+          className={cn(
+            graphVariants({ variant, size: effectiveSize }),
+            className,
+          )}
           {...props}
         >
           <div className="p-4 h-full flex items-center justify-center">
@@ -260,7 +266,10 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
       return (
         <div
           ref={ref}
-          className={cn(graphVariants({ variant, size: effectiveSize }), className)}
+          className={cn(
+            graphVariants({ variant, size: effectiveSize }),
+            className,
+          )}
           {...props}
         >
           <div className="p-4 h-full flex items-center justify-center">
@@ -468,10 +477,17 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
     };
 
     return (
-      <GraphErrorBoundary className={className} variant={variant} size={effectiveSize}>
+      <GraphErrorBoundary
+        className={className}
+        variant={variant}
+        size={effectiveSize}
+      >
         <div
           ref={ref}
-          className={cn(graphVariants({ variant, size: effectiveSize }), className)}
+          className={cn(
+            graphVariants({ variant, size: effectiveSize }),
+            className,
+          )}
           {...props}
         >
           <div className="p-4 h-full">
@@ -480,8 +496,12 @@ export const Graph = React.forwardRef<HTMLDivElement, GraphProps>(
                 {title}
               </h3>
             )}
-            <div className="w-full h-[calc(100%-2rem)]">
-              <RechartsCore.ResponsiveContainer width="100%" height="100%">
+            <div className="w-full min-w-0 min-h-[200px] h-[calc(100%-2rem)]">
+              <RechartsCore.ResponsiveContainer
+                width="100%"
+                height="100%"
+                minHeight={200}
+              >
                 {renderChart()}
               </RechartsCore.ResponsiveContainer>
             </div>

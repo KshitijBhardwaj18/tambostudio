@@ -12,7 +12,10 @@ import { Graph, graphSchema } from "@/components/tambo/graph";
 import { SelectForm, selectFormSchema } from "@/components/tambo/select-form";
 import { KPICard } from "@/components/tambo/kpi-card";
 import { DataTable } from "@/components/tambo/data-table";
-import { StatusBadge, getVariantFromStatus } from "@/components/tambo/status-badge";
+import {
+  StatusBadge,
+  getVariantFromStatus,
+} from "@/components/tambo/status-badge";
 import { Timeline } from "@/components/tambo/timeline";
 import type { TamboComponent } from "@tambo-ai/react";
 import { TamboTool } from "@tambo-ai/react";
@@ -47,33 +50,57 @@ import {
 
 const kpiCardSchema = z.object({
   title: z.string().describe("The title/label for the KPI"),
-  value: z.union([z.string(), z.number()]).describe("The main value to display"),
+  value: z
+    .union([z.string(), z.number()])
+    .describe("The main value to display"),
   change: z.string().optional().describe("The change indicator (e.g., '+12%')"),
-  trend: z.enum(["up", "down", "neutral"]).optional().describe("Direction of the trend"),
+  trend: z
+    .enum(["up", "down", "neutral"])
+    .optional()
+    .describe("Direction of the trend"),
+});
+
+// Explicit row shape (no Record/dynamic keys) so Tambo propsSchema validation accepts it
+const dataTableRowSchema = z.object({
+  values: z
+    .array(z.union([z.string(), z.number(), z.boolean()]))
+    .describe("Cell values in the same order as columns"),
 });
 
 const dataTableSchema = z.object({
-  columns: z.array(z.object({
-    key: z.string(),
-    label: z.string(),
-    sortable: z.boolean().optional(),
-  })).describe("Column definitions"),
-  data: z.array(z.record(z.any())).describe("Array of row data objects"),
+  columns: z
+    .array(
+      z.object({
+        key: z.string(),
+        label: z.string(),
+        sortable: z.boolean().optional(),
+      }),
+    )
+    .describe("Column definitions"),
+  data: z
+    .array(dataTableRowSchema)
+    .describe("Array of rows; each row has values matching column order"),
 });
 
 const statusBadgeSchema = z.object({
   status: z.string().describe("The status text to display"),
-  variant: z.enum(["success", "warning", "error", "info", "default"]).optional(),
+  variant: z
+    .enum(["success", "warning", "error", "info", "default"])
+    .optional(),
 });
 
 const timelineSchema = z.object({
-  events: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    description: z.string().optional(),
-    timestamp: z.string(),
-    status: z.enum(["completed", "current", "pending"]).optional(),
-  })).describe("Array of timeline events"),
+  events: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+        timestamp: z.string(),
+        status: z.enum(["completed", "current", "pending"]).optional(),
+      }),
+    )
+    .describe("Array of timeline events"),
 });
 
 // ============================================
@@ -143,13 +170,16 @@ export const salesTools: TamboTool[] = [
 export const supportTools: TamboTool[] = [
   {
     name: "getTickets",
-    description: "Get support tickets. Can filter by status (open, in_progress, resolved, closed) or priority (low, medium, high, critical)",
+    description:
+      "Get support tickets. Can filter by status (open, in_progress, resolved, closed) or priority (low, medium, high, critical)",
     tool: getTickets,
     toolSchema: z.function().args(
-      z.object({
-        status: z.string().optional(),
-        priority: z.string().optional(),
-      }).default({}),
+      z
+        .object({
+          status: z.string().optional(),
+          priority: z.string().optional(),
+        })
+        .default({}),
     ),
   },
   {
@@ -173,12 +203,15 @@ export const supportTools: TamboTool[] = [
   },
   {
     name: "updateTicket",
-    description: "Update an existing ticket. Can update status, priority, or assignee",
+    description:
+      "Update an existing ticket. Can update status, priority, or assignee",
     tool: updateTicket,
     toolSchema: z.function().args(
       z.string(),
       z.object({
-        status: z.enum(["open", "in_progress", "resolved", "closed"]).optional(),
+        status: z
+          .enum(["open", "in_progress", "resolved", "closed"])
+          .optional(),
         priority: z.enum(["low", "medium", "high", "critical"]).optional(),
         assignee: z.string().optional(),
       }),
@@ -186,7 +219,8 @@ export const supportTools: TamboTool[] = [
   },
   {
     name: "getTicketStats",
-    description: "Get ticket statistics including counts by status and average response time",
+    description:
+      "Get ticket statistics including counts by status and average response time",
     tool: getTicketStats,
     toolSchema: z.function().args(z.void()),
   },
@@ -199,29 +233,36 @@ export const supportTools: TamboTool[] = [
 export const engineeringTools: TamboTool[] = [
   {
     name: "getIncidents",
-    description: "Get active incidents. Can filter by status (investigating, identified, monitoring, resolved) or severity (P1, P2, P3, P4)",
+    description:
+      "Get active incidents. Can filter by status (investigating, identified, monitoring, resolved) or severity (P1, P2, P3, P4)",
     tool: getIncidents,
     toolSchema: z.function().args(
-      z.object({
-        status: z.string().optional(),
-        severity: z.string().optional(),
-      }).default({}),
+      z
+        .object({
+          status: z.string().optional(),
+          severity: z.string().optional(),
+        })
+        .default({}),
     ),
   },
   {
     name: "getDeployments",
-    description: "Get recent deployments. Can filter by environment (production, staging, development) or status (success, failed, in_progress, rolled_back)",
+    description:
+      "Get recent deployments. Can filter by environment (production, staging, development) or status (success, failed, in_progress, rolled_back)",
     tool: getDeployments,
     toolSchema: z.function().args(
-      z.object({
-        environment: z.string().optional(),
-        status: z.string().optional(),
-      }).default({}),
+      z
+        .object({
+          environment: z.string().optional(),
+          status: z.string().optional(),
+        })
+        .default({}),
     ),
   },
   {
     name: "getSystemHealth",
-    description: "Get current system health status including service statuses, uptime, and active incidents",
+    description:
+      "Get current system health status including service statuses, uptime, and active incidents",
     tool: getSystemHealth,
     toolSchema: z.function().args(z.void()),
   },
@@ -234,13 +275,16 @@ export const engineeringTools: TamboTool[] = [
 export const inventoryTools: TamboTool[] = [
   {
     name: "getInventory",
-    description: "Get inventory items. Can filter by category or show only low stock items",
+    description:
+      "Get inventory items. Can filter by category or show only low stock items",
     tool: getInventory,
     toolSchema: z.function().args(
-      z.object({
-        category: z.string().optional(),
-        lowStock: z.boolean().optional(),
-      }).default({}),
+      z
+        .object({
+          category: z.string().optional(),
+          lowStock: z.boolean().optional(),
+        })
+        .default({}),
     ),
   },
   {
@@ -257,7 +301,8 @@ export const inventoryTools: TamboTool[] = [
   },
   {
     name: "getInventoryStats",
-    description: "Get inventory statistics including total SKUs, low stock count, and total value",
+    description:
+      "Get inventory statistics including total SKUs, low stock count, and total value",
     tool: getInventoryStats,
     toolSchema: z.function().args(z.void()),
   },
@@ -270,13 +315,16 @@ export const inventoryTools: TamboTool[] = [
 export const customerSuccessTools: TamboTool[] = [
   {
     name: "getCustomers",
-    description: "Get customers. Can filter by status (healthy, at_risk, churned) or plan (starter, professional, enterprise)",
+    description:
+      "Get customers. Can filter by status (healthy, at_risk, churned) or plan (starter, professional, enterprise)",
     tool: getCustomers,
     toolSchema: z.function().args(
-      z.object({
-        status: z.string().optional(),
-        plan: z.string().optional(),
-      }).default({}),
+      z
+        .object({
+          status: z.string().optional(),
+          plan: z.string().optional(),
+        })
+        .default({}),
     ),
   },
   {
@@ -287,7 +335,8 @@ export const customerSuccessTools: TamboTool[] = [
   },
   {
     name: "getCustomerStats",
-    description: "Get customer success statistics including total MRR, average health score, and NPS",
+    description:
+      "Get customer success statistics including total MRR, average health score, and NPS",
     tool: getCustomerStats,
     toolSchema: z.function().args(z.void()),
   },
@@ -381,9 +430,10 @@ export function getToolsForTemplate(templateId: string): TamboTool[] {
 /**
  * Get components for a specific template
  */
-export function getComponentsForTemplate(_templateId: string): TamboComponent[] {
-  // All templates use the same components for now
-  // _templateId is available for future template-specific component filtering
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- _templateId reserved for future template-specific filtering
+export function getComponentsForTemplate(
+  _templateId: string,
+): TamboComponent[] {
   return components;
 }
 

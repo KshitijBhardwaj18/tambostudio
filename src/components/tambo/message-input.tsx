@@ -46,7 +46,6 @@ import {
 } from "./text-editor";
 
 // Lazy load DictationButton for code splitting (framework-agnostic alternative to next/dynamic)
-// eslint-disable-next-line @typescript-eslint/promise-function-async
 const LazyDictationButton = React.lazy(() => import("./dictation-button"));
 
 /**
@@ -788,7 +787,7 @@ const MessageInputTextarea = ({
         | Record<string, string>
         | ((prev: Record<string, string>) => Record<string, string>),
     ) => {
-      // No-op - we extract resource names directly from editor at submit time
+      void _resourceNames; // No-op - we extract resource names directly from editor at submit time
     },
     [],
   );
@@ -1418,6 +1417,7 @@ const ImageContextBadge: React.FC<ImageContextBadgeProps> = ({
           )}
         >
           <div className="relative w-full h-full">
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL from user upload, not optimizable with next/image */}
             <img
               src={image.dataUrl}
               alt={displayName}

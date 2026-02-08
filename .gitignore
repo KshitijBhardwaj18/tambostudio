@@ -42,3 +42,6 @@ next-env.d.ts
 
 # claude code local settings
 .claude/settings.local.json
+
+# rewrite-commits workflow (local only)
+/commits_to_edit.txt
