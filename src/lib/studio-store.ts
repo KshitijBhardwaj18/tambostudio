@@ -11,6 +11,7 @@ import {
   McpServer,
   matchTemplate,
 } from "./studio-templates";
+import { DataSource } from "./data-source-store";
 
 export type StudioView = "bootstrap" | "builder";
 
@@ -22,6 +23,7 @@ export interface LaunchedAppConfig {
   systemPrompt: string;
   enabledComponents: string[];
   enabledMcpServers: string[];
+  dataSources: DataSource[];
   createdAt: number;
 }
 
@@ -50,6 +52,10 @@ interface StudioState {
   mcpServers: McpServer[];
   toggleMcpServer: (id: string) => void;
   setMcpServers: (servers: McpServer[]) => void;
+  
+  // Data sources for the app
+  appDataSources: DataSource[];
+  setAppDataSources: (sources: DataSource[]) => void;
   
   // App name
   appName: string;
@@ -83,6 +89,7 @@ const initialState = {
   systemPrompt: "",
   components: [] as StudioComponent[],
   mcpServers: [] as McpServer[],
+  appDataSources: [] as DataSource[],
   appName: "My AI App",
   isGenerating: false,
   isLaunched: false,
@@ -134,6 +141,8 @@ export const useStudioStore = create<StudioState>()(
       
       setMcpServers: (servers) => set({ mcpServers: servers }),
       
+      setAppDataSources: (sources) => set({ appDataSources: sources }),
+      
       setAppName: (name) => set({ appName: name }),
       
       setIsGenerating: (generating) => set({ isGenerating: generating }),
@@ -155,6 +164,7 @@ export const useStudioStore = create<StudioState>()(
           enabledMcpServers: state.mcpServers
             .filter((s) => s.enabled)
             .map((s) => s.id),
+          dataSources: state.appDataSources,
           createdAt: Date.now(),
         };
         

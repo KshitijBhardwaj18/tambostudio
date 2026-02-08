@@ -6,6 +6,7 @@ import { TamboProvider } from "@tambo-ai/react";
 import { TamboMcpProvider } from "@tambo-ai/react/mcp";
 import { useLaunchedApp } from "@/lib/studio-store";
 import { components, tools, getToolsForTemplate, getComponentsForTemplate } from "@/lib/tambo";
+import { generateToolsForDataSources } from "@/lib/dynamic-tools";
 import { ArrowLeft } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { LaunchedAppChat } from "@/components/studio/launched-app-chat";
@@ -47,11 +48,21 @@ export default function LaunchedAppPage() {
   const contextKey = useContextKey(appId);
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
 
+  // Generate tools from data sources
+  const dataSourceTools = useMemo(() => {
+    const sources = launchedApp?.dataSources;
+    if (!sources || sources.length === 0) {
+      return [];
+    }
+    return generateToolsForDataSources(sources);
+  }, [launchedApp?.dataSources]);
+
   // Memoize tools and components to avoid recalculation
-  const appTools = useMemo(() => 
-    launchedApp ? getToolsForTemplate(launchedApp.templateId) : [],
-    [launchedApp]
-  );
+  const appTools = useMemo(() => {
+    const templateTools = launchedApp ? getToolsForTemplate(launchedApp.templateId) : [];
+    // Combine template tools with data source tools
+    return [...templateTools, ...dataSourceTools];
+  }, [launchedApp, dataSourceTools]);
   
   const appComponents = useMemo(() => 
     launchedApp ? getComponentsForTemplate(launchedApp.templateId) : [],

@@ -2,257 +2,173 @@
 
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/lib/studio-store";
-import { STUDIO_TEMPLATES, StudioComponent, McpServer } from "@/lib/studio-templates";
-import { ArrowRight, Zap, Sparkles, Code, Cpu, MessageSquare, Check, Loader2 } from "lucide-react";
+import { useDataSourceStore, SAMPLE_DATA_TEMPLATES } from "@/lib/data-source-store";
+import { STUDIO_TEMPLATES, STUDIO_COMPONENTS, MCP_SERVERS } from "@/lib/studio-templates";
+import { generateSystemPromptForDataSources } from "@/lib/dynamic-tools";
+import { 
+  ArrowRight, 
+  Database, 
+  FileSpreadsheet, 
+  FileJson, 
+  Table,
+  Sparkles,
+  Loader2,
+  Check,
+  Upload,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 
-// Generation steps for the animated progress
-interface GenerationStep {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  status: "pending" | "active" | "complete";
-}
-
-// AI-generated app configuration
-interface GeneratedConfig {
-  name: string;
-  description: string;
-  systemPrompt: string;
-  components: StudioComponent[];
-  mcpServers: McpServer[];
-  suggestedFeatures: string[];
-}
-
-// Simulate AI generation of app config based on user input
-async function generateAppConfig(userInput: string): Promise<GeneratedConfig> {
-  const input = userInput.toLowerCase();
-  
-  // Analyze user input to determine app type and features
-  const isSupport = /support|ticket|help|customer service|issue|bug/i.test(input);
-  const isSales = /sales|revenue|deal|crm|pipeline|forecast/i.test(input);
-  const isEngineering = /engineering|incident|deploy|devops|monitor|system/i.test(input);
-  const isInventory = /inventory|stock|warehouse|product|sku|supply/i.test(input);
-  const isCustomerSuccess = /customer success|churn|health|retention|nps/i.test(input);
-  const isAnalytics = /analytics|dashboard|metrics|kpi|report|data/i.test(input);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _isChat = /chat|conversation|assistant|bot/i.test(input);
-  
-  // Extract key features from input
-  const wantsCharts = /chart|graph|visual|trend/i.test(input);
-  const wantsTables = /table|list|grid|data/i.test(input);
-  const wantsKPIs = /kpi|metric|stat|number/i.test(input);
-  const wantsTimeline = /timeline|history|activity|log/i.test(input);
-  
-  // Generate a unique app name based on input
-  const words = userInput.split(/\s+/).filter(w => w.length > 3);
-  const nameWords = words.slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-  const appName = nameWords.length > 0 ? `${nameWords.join(" ")} AI` : "Custom AI App";
-  
-  // Generate system prompt based on detected intent
-  let systemPrompt = `You are an intelligent AI assistant`;
-  let description = "A custom AI-powered application";
-  const suggestedFeatures: string[] = [];
-  
-  if (isSupport) {
-    systemPrompt = `You are a support operations AI assistant. Help users manage support tickets, track issues, prioritize work, and improve response times. You can create, update, and analyze tickets. Always be helpful and solution-oriented.`;
-    description = "AI-powered support ticket management and customer service optimization";
-    suggestedFeatures.push("Ticket Management", "Priority Routing", "Response Analytics");
-  } else if (isSales) {
-    systemPrompt = `You are a sales analytics AI assistant. Help users track revenue, manage deals, forecast sales, and analyze pipeline performance. Provide actionable insights to improve sales outcomes.`;
-    description = "AI-powered sales analytics and pipeline management";
-    suggestedFeatures.push("Revenue Tracking", "Deal Pipeline", "Sales Forecasting");
-  } else if (isEngineering) {
-    systemPrompt = `You are an engineering operations AI assistant. Help users monitor system health, manage incidents, track deployments, and maintain service reliability. Prioritize uptime and quick resolution.`;
-    description = "AI-powered engineering operations and incident management";
-    suggestedFeatures.push("Incident Management", "Deployment Tracking", "System Monitoring");
-  } else if (isInventory) {
-    systemPrompt = `You are an inventory management AI assistant. Help users track stock levels, manage reorders, optimize warehouse operations, and prevent stockouts. Focus on efficiency and accuracy.`;
-    description = "AI-powered inventory tracking and supply chain optimization";
-    suggestedFeatures.push("Stock Tracking", "Reorder Alerts", "Supplier Management");
-  } else if (isCustomerSuccess) {
-    systemPrompt = `You are a customer success AI assistant. Help users monitor customer health scores, identify churn risks, track engagement, and improve retention. Focus on proactive customer care.`;
-    description = "AI-powered customer success and retention management";
-    suggestedFeatures.push("Health Scoring", "Churn Prediction", "Engagement Tracking");
-  } else if (isAnalytics) {
-    systemPrompt = `You are a data analytics AI assistant. Help users visualize data, track KPIs, generate reports, and discover insights. Make complex data accessible and actionable.`;
-    description = "AI-powered data analytics and business intelligence";
-    suggestedFeatures.push("Data Visualization", "KPI Tracking", "Custom Reports");
-  } else {
-    systemPrompt = `You are a helpful AI assistant built with TamboStudio. ${userInput}. Be helpful, accurate, and proactive in assisting users with their tasks.`;
-    description = userInput.length > 50 ? userInput.substring(0, 50) + "..." : userInput;
-    suggestedFeatures.push("AI Chat", "Task Assistance", "Smart Responses");
-  }
-  
-  // Generate component configuration
-  const components: StudioComponent[] = [
-    { id: "graph", name: "Graph", description: "Charts and visualizations", enabled: wantsCharts || isAnalytics || isSales },
-    { id: "kpi-card", name: "KPI Card", description: "Key metrics display", enabled: wantsKPIs || isAnalytics || isSales || isSupport },
-    { id: "data-table", name: "Data Table", description: "Tabular data display", enabled: wantsTables || isSupport || isInventory || isCustomerSuccess },
-    { id: "status-badge", name: "Status Badge", description: "Status indicators", enabled: isSupport || isEngineering || isInventory },
-    { id: "timeline", name: "Timeline", description: "Activity timeline", enabled: wantsTimeline || isEngineering || isSupport },
-    { id: "select-form", name: "Select Form", description: "Interactive forms", enabled: true },
-  ];
-  
-  // Generate MCP server configuration
-  const mcpServers: McpServer[] = [
-    { id: "data-tools", name: "Data Tools", description: "Data fetching and analysis", enabled: true, tools: ["fetchData", "queryDatabase", "exportData"] },
-    { id: "analytics", name: "Analytics", description: "Business analytics", enabled: isAnalytics || isSales, tools: ["generateReport", "calculateMetrics", "forecastTrend"] },
-    { id: "notifications", name: "Notifications", description: "Alert management", enabled: isSupport || isEngineering, tools: ["sendAlert", "scheduleNotification", "manageSubscriptions"] },
-  ];
-  
-  return {
-    name: appName,
-    description,
-    systemPrompt,
-    components,
-    mcpServers,
-    suggestedFeatures,
-  };
-}
+type Step = "data" | "describe" | "ready";
 
 export const BootstrapChat: React.FC<{ className?: string }> = ({ className }) => {
-  const [input, setInput] = React.useState("");
-  const [generationSteps, setGenerationSteps] = React.useState<GenerationStep[]>([]);
-  const [generatedConfig, setGeneratedConfig] = React.useState<GeneratedConfig | null>(null);
+  const [step, setStep] = React.useState<Step>("data");
+  const [appDescription, setAppDescription] = React.useState("");
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [showUploadModal, setShowUploadModal] = React.useState(false);
+  const [uploadType, setUploadType] = React.useState<"csv" | "json" | null>(null);
+  const [textInput, setTextInput] = React.useState("");
+  const [fileName, setFileName] = React.useState("");
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const {
-    bootstrapMessages,
-    addBootstrapMessage,
     setSelectedTemplate,
     setSystemPrompt,
     setComponents,
     setMcpServers,
     setAppName,
+    setAppDataSources,
     setView,
-    setIsGenerating,
-    isGenerating,
   } = useStudioStore();
   
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const { 
+    dataSources, 
+    addSampleData, 
+    parseCSV, 
+    parseJSON,
+    removeDataSource,
+  } = useDataSourceStore();
   
+  // Sync data sources to studio store
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [bootstrapMessages, generationSteps]);
+    setAppDataSources(dataSources);
+  }, [dataSources, setAppDataSources]);
   
-  const runGenerationSteps = async (userInput: string) => {
-    const steps: GenerationStep[] = [
-      { id: "analyze", label: "Analyzing your requirements", icon: <Sparkles className="h-4 w-4" />, status: "pending" },
-      { id: "components", label: "Selecting components", icon: <Code className="h-4 w-4" />, status: "pending" },
-      { id: "tools", label: "Configuring AI tools", icon: <Cpu className="h-4 w-4" />, status: "pending" },
-      { id: "prompt", label: "Generating system prompt", icon: <MessageSquare className="h-4 w-4" />, status: "pending" },
-    ];
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    setGenerationSteps(steps);
-    
-    // Step 1: Analyze
-    setGenerationSteps(s => s.map(step => step.id === "analyze" ? { ...step, status: "active" } : step));
-    await new Promise(r => setTimeout(r, 800));
-    setGenerationSteps(s => s.map(step => step.id === "analyze" ? { ...step, status: "complete" } : step));
-    
-    // Step 2: Components
-    setGenerationSteps(s => s.map(step => step.id === "components" ? { ...step, status: "active" } : step));
-    await new Promise(r => setTimeout(r, 600));
-    setGenerationSteps(s => s.map(step => step.id === "components" ? { ...step, status: "complete" } : step));
-    
-    // Step 3: Tools
-    setGenerationSteps(s => s.map(step => step.id === "tools" ? { ...step, status: "active" } : step));
-    await new Promise(r => setTimeout(r, 700));
-    setGenerationSteps(s => s.map(step => step.id === "tools" ? { ...step, status: "complete" } : step));
-    
-    // Step 4: System Prompt
-    setGenerationSteps(s => s.map(step => step.id === "prompt" ? { ...step, status: "active" } : step));
-    const config = await generateAppConfig(userInput);
-    await new Promise(r => setTimeout(r, 500));
-    setGenerationSteps(s => s.map(step => step.id === "prompt" ? { ...step, status: "complete" } : step));
-    
-    return config;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setTextInput(content);
+      setFileName(file.name.replace(/\.[^/.]+$/, ""));
+    };
+    reader.readAsText(file);
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isGenerating) return;
-    
-    const userInput = input.trim();
-    setInput("");
-    addBootstrapMessage("user", userInput);
-    setIsGenerating(true);
-    setGeneratedConfig(null);
+  const handleAddDataSource = () => {
+    setUploadError(null);
     
     try {
-      const config = await runGenerationSteps(userInput);
-      setGeneratedConfig(config);
+      if (uploadType === "csv") {
+        parseCSV(textInput, fileName || "CSV Data");
+      } else if (uploadType === "json") {
+        parseJSON(textInput, fileName || "JSON Data");
+      }
       
-      // Apply the generated config to the store
-      setAppName(config.name);
-      setSystemPrompt(config.systemPrompt);
-      setComponents(config.components);
-      setMcpServers(config.mcpServers);
-      
-      // Find closest matching template for tools
-      const matchedTemplate = STUDIO_TEMPLATES.find(t => 
-        config.systemPrompt.toLowerCase().includes(t.id.replace("-", " "))
-      ) || STUDIO_TEMPLATES[0];
-      setSelectedTemplate(matchedTemplate);
-      
-      const response = `I've generated **${config.name}** for you!
-
-**${config.description}**
-
-Features enabled:
-${config.suggestedFeatures.map(f => `• ${f}`).join("\n")}
-
-Components: ${config.components.filter(c => c.enabled).map(c => c.name).join(", ")}
-
-Click **"Launch Your App"** to start using it, or customize it in the builder.`;
-      
-      addBootstrapMessage("assistant", response);
-    } catch {
-      addBootstrapMessage("assistant", "Sorry, I encountered an error generating your app. Please try again.");
+      setShowUploadModal(false);
+      setTextInput("");
+      setFileName("");
+      setUploadType(null);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Failed to parse data");
     }
-    
-    setIsGenerating(false);
-    setGenerationSteps([]);
   };
   
-  const handleQuickStart = async (templateId: string) => {
-    const template = STUDIO_TEMPLATES.find((t) => t.id === templateId);
-    if (!template) return;
+  const handleAddSampleData = (key: keyof typeof SAMPLE_DATA_TEMPLATES) => {
+    addSampleData(key);
+  };
+  
+  const handleGenerateApp = async () => {
+    if (dataSources.length === 0) return;
     
-    addBootstrapMessage("user", `Create a ${template.name.toLowerCase()} app`);
     setIsGenerating(true);
     
-    await new Promise(r => setTimeout(r, 500));
+    // Simulate generation time
+    await new Promise(r => setTimeout(r, 1500));
+    
+    // Generate app name from description or data source names
+    const appName = appDescription 
+      ? appDescription.split(" ").slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") + " AI"
+      : dataSources[0].name + " Assistant";
+    
+    // Generate system prompt based on data sources
+    const systemPrompt = generateSystemPromptForDataSources(dataSources, appName);
+    
+    // Determine which components to enable based on data
+    const hasNumericData = dataSources.some(ds => ds.fields.some(f => f.type === "number"));
+    const hasStringData = dataSources.some(ds => ds.fields.some(f => f.type === "string"));
+    
+    const enabledComponents = STUDIO_COMPONENTS.map(comp => ({
+      ...comp,
+      enabled: 
+        (comp.id === "graph" && hasNumericData) ||
+        (comp.id === "kpi-card" && hasNumericData) ||
+        (comp.id === "data-table" && true) ||
+        (comp.id === "status-badge" && hasStringData) ||
+        (comp.id === "select-form" && true) ||
+        comp.id === "timeline",
+    }));
+    
+    // Enable relevant MCP servers
+    const enabledServers = MCP_SERVERS.map(server => ({
+      ...server,
+      enabled: server.id === "data-tools" || server.id === "analytics",
+    }));
+    
+    // Apply configuration
+    setAppName(appName);
+    setSystemPrompt(systemPrompt);
+    setComponents(enabledComponents);
+    setMcpServers(enabledServers);
+    setSelectedTemplate(STUDIO_TEMPLATES[0]); // Use first template as base
+    
+    setIsGenerating(false);
+    setStep("ready");
+  };
+  
+  const handleLaunch = () => {
+    setView("builder");
+  };
+  
+  const handleQuickStart = (templateId: string) => {
+    const template = STUDIO_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+    
+    // Add corresponding sample data
+    const sampleDataMap: Record<string, keyof typeof SAMPLE_DATA_TEMPLATES> = {
+      "sales-analytics": "sales",
+      "support-ops": "tickets",
+      "customer-success": "customers",
+      "inventory-manager": "inventory",
+    };
+    
+    const sampleKey = sampleDataMap[templateId];
+    if (sampleKey) {
+      addSampleData(sampleKey);
+    }
     
     setSelectedTemplate(template);
     setAppName(template.name);
     setSystemPrompt(template.systemPrompt);
     setComponents(template.components);
     setMcpServers(template.mcpServers);
-    
-    setGeneratedConfig({
-      name: template.name,
-      description: template.description,
-      systemPrompt: template.systemPrompt,
-      components: template.components,
-      mcpServers: template.mcpServers,
-      suggestedFeatures: template.components.filter(c => c.enabled).map(c => c.name),
-    });
-    
-    addBootstrapMessage(
-      "assistant",
-      `I've configured **${template.name}** for you!\n\n**${template.description}**\n\nClick **"Launch Your App"** to start using it.`
-    );
-    setIsGenerating(false);
+    setStep("ready");
   };
-  
-  const handleLaunchApp = () => {
-    setView("builder");
-  };
-  
-  const hasMessages = bootstrapMessages.length > 0;
-  const showLaunchButton = hasMessages && !isGenerating && generatedConfig;
   
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -267,199 +183,380 @@ Click **"Launch Your App"** to start using it, or customize it in the builder.`;
           />
           <div>
             <h2 className="font-semibold">TamboStudio</h2>
-            <p className="text-xs text-muted-foreground">AI App Generator</p>
+            <p className="text-xs text-muted-foreground">Build AI apps from your data</p>
           </div>
         </div>
       </div>
       
-      {/* Messages */}
-      <div className="flex-1 overflow-auto p-4 space-y-4">
-        {!hasMessages && (
+      {/* Progress indicator */}
+      <div className="px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
+            step === "data" ? "bg-[#7FFFC3] text-gray-900" : "bg-[#7FFFC3]/20 text-[#7FFFC3]"
+          )}>
+            {dataSources.length > 0 ? <Check className="h-3 w-3" /> : <span>1</span>}
+            <span>Data</span>
+          </div>
+          <div className="w-8 h-px bg-border" />
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
+            step === "describe" ? "bg-[#7FFFC3] text-gray-900" : 
+            step === "ready" ? "bg-[#7FFFC3]/20 text-[#7FFFC3]" : "bg-muted text-muted-foreground"
+          )}>
+            <span>2</span>
+            <span>Configure</span>
+          </div>
+          <div className="w-8 h-px bg-border" />
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
+            step === "ready" ? "bg-[#7FFFC3] text-gray-900" : "bg-muted text-muted-foreground"
+          )}>
+            <span>3</span>
+            <span>Launch</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-4">
+        {step === "data" && (
           <div className="space-y-6">
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#7FFFC3]/20 to-[#7FFFC3]/5 mb-4">
-                <Zap className="h-10 w-10 text-[#7FFFC3]" />
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7FFFC3]/20 to-[#7FFFC3]/5 mb-4">
+                <Database className="h-8 w-8 text-[#7FFFC3]" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">What would you like to build?</h3>
+              <h3 className="text-lg font-semibold mb-2">Connect Your Data</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Describe your app in plain English. I&apos;ll generate a custom AI application with the right components, tools, and configuration.
+                Upload your data or use sample datasets. TamboStudio will generate 
+                tools to query and analyze it.
               </p>
             </div>
             
-            {/* Example prompts */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground text-center mb-3">Try these examples:</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {[
-                  "A dashboard to track sales metrics",
-                  "Help desk for customer support",
-                  "Inventory management system",
-                ].map((example, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setInput(example)}
-                    className="px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-full transition-colors"
+            {/* Connected data sources */}
+            {dataSources.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Connected Data:</p>
+                {dataSources.map((source) => (
+                  <div
+                    key={source.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-[#7FFFC3]/30 bg-[#7FFFC3]/5"
                   >
-                    {example}
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#7FFFC3]/20 flex items-center justify-center">
+                        {source.type === "csv" && <FileSpreadsheet className="h-4 w-4 text-[#7FFFC3]" />}
+                        {source.type === "json" && <FileJson className="h-4 w-4 text-[#7FFFC3]" />}
+                        {source.type === "sample" && <Table className="h-4 w-4 text-[#7FFFC3]" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{source.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {source.data.length} records • {source.fields.length} fields
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeDataSource(source.id)}
+                      className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Add data options */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                {dataSources.length > 0 ? "Add more data:" : "Choose a data source:"}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => { setShowUploadModal(true); setUploadType("csv"); }}
+                  className="flex items-center gap-2 p-3 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-[#7FFFC3]/5 transition-all"
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-green-500" />
+                  <span className="text-sm font-medium">Upload CSV</span>
+                </button>
+                
+                <button
+                  onClick={() => { setShowUploadModal(true); setUploadType("json"); }}
+                  className="flex items-center gap-2 p-3 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-[#7FFFC3]/5 transition-all"
+                >
+                  <FileJson className="h-5 w-5 text-blue-500" />
+                  <span className="text-sm font-medium">Upload JSON</span>
+                </button>
+              </div>
+              
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-3 text-xs text-muted-foreground">or use sample data</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(SAMPLE_DATA_TEMPLATES).map(([key, template]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleAddSampleData(key as keyof typeof SAMPLE_DATA_TEMPLATES)}
+                    className="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-[#7FFFC3]/5 transition-all text-left"
+                  >
+                    <Table className="h-4 w-4 text-purple-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{template.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{template.data.length} records</p>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
             
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background px-3 text-xs text-muted-foreground">or start with a template</span>
-              </div>
-            </div>
-            
             {/* Quick start templates */}
-            <div className="grid grid-cols-1 gap-2">
-              {STUDIO_TEMPLATES.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => handleQuickStart(template.id)}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-[#7FFFC3]/5 transition-all text-left group"
-                >
-                  <span className="text-2xl">{template.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm group-hover:text-[#7FFFC3] transition-colors">
-                      {template.name}
+            <div className="space-y-3 pt-4 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground">Or start with a template:</p>
+              <div className="grid grid-cols-1 gap-2">
+                {STUDIO_TEMPLATES.slice(0, 3).map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => handleQuickStart(template.id)}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[#7FFFC3]/50 hover:bg-[#7FFFC3]/5 transition-all text-left group"
+                  >
+                    <span className="text-xl">{template.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm group-hover:text-[#7FFFC3] transition-colors">
+                        {template.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">
+                        {template.description}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {template.description}
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-[#7FFFC3] transition-colors" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {bootstrapMessages.map((msg, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex",
-              msg.role === "user" ? "justify-end" : "justify-start"
-            )}
-          >
-            <div
-              className={cn(
-                "max-w-[85%] rounded-xl px-4 py-3",
-                msg.role === "user"
-                  ? "bg-[#7FFFC3] text-gray-900"
-                  : "bg-muted"
-              )}
-            >
-              <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                {msg.content.split("**").map((part, j) =>
-                  j % 2 === 1 ? (
-                    <strong key={j} className={msg.role === "user" ? "text-gray-900" : "text-[#7FFFC3]"}>{part}</strong>
-                  ) : (
-                    <span key={j}>{part}</span>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        {/* Generation progress */}
-        {isGenerating && generationSteps.length > 0 && (
-          <div className="flex justify-start">
-            <div className="bg-muted rounded-xl px-4 py-3 w-full max-w-[85%]">
-              <div className="text-xs text-muted-foreground mb-3">Generating your app...</div>
-              <div className="space-y-2">
-                {generationSteps.map((step) => (
-                  <div key={step.id} className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center",
-                      step.status === "complete" && "bg-[#7FFFC3] text-gray-900",
-                      step.status === "active" && "bg-[#7FFFC3]/20 text-[#7FFFC3]",
-                      step.status === "pending" && "bg-muted-foreground/20 text-muted-foreground"
-                    )}>
-                      {step.status === "complete" ? (
-                        <Check className="h-3 w-3" />
-                      ) : step.status === "active" ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        step.icon
-                      )}
-                    </div>
-                    <span className={cn(
-                      "text-sm",
-                      step.status === "complete" && "text-foreground",
-                      step.status === "active" && "text-[#7FFFC3]",
-                      step.status === "pending" && "text-muted-foreground"
-                    )}>
-                      {step.label}
-                    </span>
-                  </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-[#7FFFC3] transition-colors" />
+                  </button>
                 ))}
               </div>
             </div>
           </div>
         )}
         
-        {/* Simple loading indicator */}
-        {isGenerating && generationSteps.length === 0 && (
-          <div className="flex justify-start">
-            <div className="bg-muted rounded-xl px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-[#7FFFC3]" />
-                <span className="text-sm text-muted-foreground">Generating...</span>
+        {step === "describe" && (
+          <div className="space-y-6">
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7FFFC3]/20 to-[#7FFFC3]/5 mb-4">
+                <Sparkles className="h-8 w-8 text-[#7FFFC3]" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Describe Your App</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Tell us what you want to do with your data. We&apos;ll configure the AI accordingly.
+              </p>
+            </div>
+            
+            {/* Data summary */}
+            <div className="p-3 rounded-lg bg-muted/50 border border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Your data:</p>
+              <div className="flex flex-wrap gap-2">
+                {dataSources.map((source) => (
+                  <span key={source.id} className="px-2 py-1 bg-[#7FFFC3]/10 text-[#7FFFC3] rounded text-xs font-medium">
+                    {source.name} ({source.data.length} records)
+                  </span>
+                ))}
               </div>
             </div>
+            
+            {/* Description input */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                What would you like to do with this data? (optional)
+              </label>
+              <textarea
+                value={appDescription}
+                onChange={(e) => setAppDescription(e.target.value)}
+                placeholder="e.g., Analyze sales trends, track customer health, manage inventory levels..."
+                className="w-full h-24 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-[#7FFFC3]/50 resize-none"
+              />
+            </div>
+            
+            {/* Generate button */}
+            <button
+              onClick={handleGenerateApp}
+              disabled={isGenerating}
+              className="w-full py-3 px-4 bg-[#7FFFC3] text-gray-900 rounded-xl font-semibold hover:bg-[#6ee6b0] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  Generate App
+                </>
+              )}
+            </button>
           </div>
         )}
         
-        <div ref={messagesEndRef} />
+        {step === "ready" && (
+          <div className="space-y-6">
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7FFFC3]/20 to-[#7FFFC3]/5 mb-4">
+                <Check className="h-8 w-8 text-[#7FFFC3]" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Your App is Ready!</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Launch your app to start chatting with your data, or customize it further in the builder.
+              </p>
+            </div>
+            
+            {/* App summary */}
+            <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Data Sources</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {dataSources.map((source) => (
+                    <span key={source.id} className="px-2 py-1 bg-[#7FFFC3]/10 text-[#7FFFC3] rounded text-xs font-medium">
+                      {source.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Generated Tools</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {dataSources.map((source) => (
+                    <React.Fragment key={source.id}>
+                      <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">
+                        get{source.name.replace(/\s+/g, "")}Data
+                      </span>
+                      <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">
+                        search{source.name.replace(/\s+/g, "")}
+                      </span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Components</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {["Graph", "KPI Card", "Data Table", "Status Badge"].map((comp) => (
+                    <span key={comp} className="px-2 py-1 bg-purple-500/10 text-purple-400 rounded text-xs">
+                      {comp}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Launch button */}
+            <button
+              onClick={handleLaunch}
+              className="w-full py-3 px-4 bg-[#7FFFC3] text-gray-900 rounded-xl font-semibold hover:bg-[#6ee6b0] transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-[#7FFFC3]/20"
+            >
+              <Sparkles className="h-5 w-5" />
+              Launch App
+            </button>
+            
+            <p className="text-xs text-center text-muted-foreground">
+              You can customize components and settings in the builder
+            </p>
+          </div>
+        )}
       </div>
       
-      {/* Launch button */}
-      {showLaunchButton && (
-        <div className="p-4 border-t border-border bg-gradient-to-r from-[#7FFFC3]/5 to-transparent">
+      {/* Continue button for data step */}
+      {step === "data" && dataSources.length > 0 && (
+        <div className="p-4 border-t border-border">
           <button
-            onClick={handleLaunchApp}
-            className="w-full py-3 px-4 bg-[#7FFFC3] text-gray-900 rounded-xl font-semibold hover:bg-[#6ee6b0] transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-[#7FFFC3]/20"
+            onClick={() => setStep("describe")}
+            className="w-full py-3 px-4 bg-[#7FFFC3] text-gray-900 rounded-xl font-semibold hover:bg-[#6ee6b0] transition-all flex items-center justify-center gap-2"
           >
-            <Sparkles className="h-5 w-5" />
-            Launch Your App
+            Continue
+            <ArrowRight className="h-5 w-5" />
           </button>
-          <p className="text-xs text-center text-muted-foreground mt-2">
-            Or customize components and settings in the builder
-          </p>
         </div>
       )}
       
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-border">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe the AI app you want to build..."
-            className="flex-1 px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#7FFFC3]/50 focus:border-[#7FFFC3]/50 text-sm transition-all"
-            disabled={isGenerating}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || isGenerating}
-            className="px-5 py-3 bg-[#7FFFC3] text-gray-900 rounded-xl font-medium hover:bg-[#6ee6b0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <ArrowRight className="h-5 w-5" />
-            )}
-          </button>
+      {/* Upload modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background border border-border rounded-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="font-semibold">Upload {uploadType?.toUpperCase()}</h3>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setUploadType(null);
+                  setTextInput("");
+                  setUploadError(null);
+                }}
+                className="p-1 hover:bg-muted rounded"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Data Name</label>
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  placeholder={`My ${uploadType?.toUpperCase()} Data`}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-[#7FFFC3]/50"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Upload or Paste</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={uploadType === "csv" ? ".csv" : ".json"}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-lg hover:border-[#7FFFC3]/50 transition-colors mb-2"
+                >
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Click to upload</span>
+                </button>
+                
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder={uploadType === "csv" 
+                    ? "name,value,category\nItem 1,100,A"
+                    : '[{"name": "Item 1", "value": 100}]'
+                  }
+                  className="w-full h-24 px-3 py-2 rounded-lg border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#7FFFC3]/50"
+                />
+              </div>
+              
+              {uploadError && (
+                <p className="text-sm text-red-500">{uploadError}</p>
+              )}
+              
+              <button
+                onClick={handleAddDataSource}
+                disabled={!textInput.trim()}
+                className="w-full py-2 bg-[#7FFFC3] text-gray-900 rounded-lg font-medium hover:bg-[#6ee6b0] transition-colors disabled:opacity-50"
+              >
+                Add Data
+              </button>
+            </div>
+          </div>
         </div>
-      </form>
+      )}
     </div>
   );
 };

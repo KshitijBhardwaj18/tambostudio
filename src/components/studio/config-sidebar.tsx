@@ -2,14 +2,17 @@
 
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/lib/studio-store";
+import { useDataSourceStore } from "@/lib/data-source-store";
 import { MCP_SERVERS, STUDIO_COMPONENTS } from "@/lib/studio-templates";
 import {
   ChevronDown,
   ChevronRight,
+  Database,
   Layers,
   MessageSquare,
   Plug,
   Settings,
+  X,
 } from "lucide-react";
 import * as React from "react";
 
@@ -26,8 +29,10 @@ export const ConfigSidebar: React.FC<{ className?: string }> = ({ className }) =
     setAppName,
   } = useStudioStore();
   
+  const { dataSources, removeDataSource } = useDataSourceStore();
+  
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
-    new Set(["prompt", "components", "mcp"])
+    new Set(["data", "prompt", "components", "mcp"])
   );
   
   const toggleSection = (section: string) => {
@@ -71,6 +76,53 @@ export const ConfigSidebar: React.FC<{ className?: string }> = ({ className }) =
       
       {/* Scrollable content */}
       <div className="flex-1 overflow-auto">
+        {/* Data Sources Section */}
+        {dataSources.length > 0 && (
+          <div className="border-b border-border">
+            <button
+              onClick={() => toggleSection("data")}
+              className="w-full flex items-center gap-2 p-3 hover:bg-accent/50 transition-colors"
+            >
+              {expandedSections.has("data") ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Database className="h-4 w-4 text-[#7FFFC3]" />
+              <span className="font-medium text-sm">Data Sources</span>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {dataSources.length}
+              </span>
+            </button>
+            {expandedSections.has("data") && (
+              <div className="px-3 pb-3 space-y-1">
+                {dataSources.map((source) => (
+                  <div
+                    key={source.id}
+                    className="flex items-center justify-between p-2 rounded-md bg-[#7FFFC3]/10"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-[#7FFFC3]">{source.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {source.data.length} records • {source.fields.length} fields
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeDataSource(source.id)}
+                      className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground pt-2">
+                  Tools will be generated automatically for each data source.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* System Prompt Section */}
         <div className="border-b border-border">
           <button
