@@ -6,11 +6,19 @@ import { BootstrapChat } from "./bootstrap-chat";
 import { ConfigSidebar } from "./config-sidebar";
 import { CodePreview } from "./code-preview";
 import { LivePreview } from "./live-preview";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 export const StudioLayout: React.FC<{ className?: string }> = ({ className }) => {
-  const { view, setView, reset, selectedTemplate } = useStudioStore();
+  const router = useRouter();
+  const { view, setView, reset, selectedTemplate, launchedApp } = useStudioStore();
+  
+  const handleOpenApp = () => {
+    if (launchedApp) {
+      router.push(`/app/${launchedApp.id}`);
+    }
+  };
   
   return (
     <div className={cn("h-screen flex flex-col bg-background", className)}>
@@ -33,11 +41,20 @@ export const StudioLayout: React.FC<{ className?: string }> = ({ className }) =>
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {selectedTemplate && (
             <span className="text-sm text-muted-foreground">
               Template: <span className="font-medium text-foreground">{selectedTemplate.name}</span>
             </span>
+          )}
+          {launchedApp && (
+            <button
+              onClick={handleOpenApp}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open {launchedApp.name}
+            </button>
           )}
           <button
             onClick={reset}

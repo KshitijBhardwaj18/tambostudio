@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/lib/studio-store";
 import { Graph } from "@/components/tambo/graph";
+import { useRouter } from "next/navigation";
 import { 
   BarChart3, 
   Play, 
@@ -12,10 +13,11 @@ import {
   DollarSign,
   AlertCircle,
   MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 import * as React from "react";
 
-// Mock KPI Card component
+// Mock KPI Card component for preview
 const KPICard: React.FC<{
   title: string;
   value: string;
@@ -46,7 +48,7 @@ const KPICard: React.FC<{
   </div>
 );
 
-// Mock Data Table component
+// Mock Data Table component for preview
 const DataTable: React.FC<{
   columns: string[];
   rows: (string | React.ReactNode)[][];
@@ -77,7 +79,7 @@ const DataTable: React.FC<{
   </div>
 );
 
-// Status Badge component
+// Status Badge component for preview
 const StatusBadge: React.FC<{ status: string; variant?: "success" | "warning" | "error" | "default" }> = ({ 
   status, 
   variant = "default" 
@@ -94,7 +96,9 @@ const StatusBadge: React.FC<{ status: string; variant?: "success" | "warning" | 
 );
 
 export const LivePreview: React.FC<{ className?: string }> = ({ className }) => {
-  const { selectedTemplate, components, isLaunched, setIsLaunched } = useStudioStore();
+  const router = useRouter();
+  const { selectedTemplate, components, launchApp, launchedApp } = useStudioStore();
+  const [isLaunching, setIsLaunching] = React.useState(false);
   
   if (!selectedTemplate) {
     return (
@@ -233,8 +237,27 @@ export const LivePreview: React.FC<{ className?: string }> = ({ className }) => 
   
   const mockData = getMockData();
   
-  const handleLaunch = () => {
-    setIsLaunched(true);
+  const handleLaunch = async () => {
+    setIsLaunching(true);
+    
+    // Small delay for UX
+    await new Promise((r) => setTimeout(r, 500));
+    
+    // Launch the app and get config
+    const config = launchApp();
+    
+    if (config) {
+      // Navigate to the launched app
+      router.push(`/app/${config.id}`);
+    }
+    
+    setIsLaunching(false);
+  };
+
+  const handleOpenApp = () => {
+    if (launchedApp) {
+      router.push(`/app/${launchedApp.id}`);
+    }
   };
   
   return (
@@ -245,73 +268,74 @@ export const LivePreview: React.FC<{ className?: string }> = ({ className }) => 
           <Play className="h-4 w-4 text-primary" />
           <span className="font-medium text-sm">Live Preview</span>
         </div>
-        <button
-          onClick={handleLaunch}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Rocket className="h-3.5 w-3.5" />
-          Launch App
-        </button>
+        <div className="flex items-center gap-2">
+          {launchedApp && (
+            <button
+              onClick={handleOpenApp}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border text-foreground rounded-md text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open App
+            </button>
+          )}
+          <button
+            onClick={handleLaunch}
+            disabled={isLaunching}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {isLaunching ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Launching...
+              </>
+            ) : (
+              <>
+                <Rocket className="h-3.5 w-3.5" />
+                Launch App
+              </>
+            )}
+          </button>
+        </div>
       </div>
       
       {/* Preview content */}
       <div className="flex-1 overflow-auto p-4 bg-muted/30">
-        {isLaunched ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center p-8 bg-card rounded-lg border border-border shadow-lg">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-                <Rocket className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">App Launched!</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Your {selectedTemplate.name} app is now live.
-              </p>
-              <button
-                onClick={() => setIsLaunched(false)}
-                className="text-sm text-primary hover:underline"
-              >
-                Back to preview
-              </button>
+        <div className="space-y-4">
+          {/* KPI Cards */}
+          {hasKPI && (
+            <div className="grid grid-cols-3 gap-3">
+              {mockData.kpis.map((kpi, i) => (
+                <KPICard key={i} {...kpi} />
+              ))}
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* KPI Cards */}
-            {hasKPI && (
-              <div className="grid grid-cols-3 gap-3">
-                {mockData.kpis.map((kpi, i) => (
-                  <KPICard key={i} {...kpi} />
-                ))}
-              </div>
-            )}
-            
-            {/* Graph */}
-            {hasGraph && (
-              <Graph
-                data={mockData.graphData}
-                title={`${selectedTemplate.name} Overview`}
-                variant="bordered"
-              />
-            )}
-            
-            {/* Data Table */}
-            {hasTable && (
-              <DataTable
-                columns={mockData.tableColumns}
-                rows={mockData.tableRows}
-              />
-            )}
-            
-            {/* Empty state if no components */}
-            {enabledComponents.length === 0 && (
-              <div className="flex items-center justify-center h-48 border-2 border-dashed border-border rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Enable components to see preview
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          
+          {/* Graph */}
+          {hasGraph && (
+            <Graph
+              data={mockData.graphData}
+              title={`${selectedTemplate.name} Overview`}
+              variant="bordered"
+            />
+          )}
+          
+          {/* Data Table */}
+          {hasTable && (
+            <DataTable
+              columns={mockData.tableColumns}
+              rows={mockData.tableRows}
+            />
+          )}
+          
+          {/* Empty state if no components */}
+          {enabledComponents.length === 0 && (
+            <div className="flex items-center justify-center h-48 border-2 border-dashed border-border rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Enable components to see preview
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
