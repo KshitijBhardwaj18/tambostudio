@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import { useStudioStore } from "@/lib/studio-store";
 import { Graph } from "@/components/tambo/graph";
-import { useRouter } from "next/navigation";
 import { 
   BarChart3, 
   Play, 
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-// Mock KPI Card component for preview
+// Mock KPI Card component
 const KPICard: React.FC<{
   title: string;
   value: string;
@@ -47,7 +46,7 @@ const KPICard: React.FC<{
   </div>
 );
 
-// Mock Data Table component for preview
+// Mock Data Table component
 const DataTable: React.FC<{
   columns: string[];
   rows: (string | React.ReactNode)[][];
@@ -78,7 +77,7 @@ const DataTable: React.FC<{
   </div>
 );
 
-// Status Badge component for preview
+// Status Badge component
 const StatusBadge: React.FC<{ status: string; variant?: "success" | "warning" | "error" | "default" }> = ({ 
   status, 
   variant = "default" 
@@ -95,8 +94,7 @@ const StatusBadge: React.FC<{ status: string; variant?: "success" | "warning" | 
 );
 
 export const LivePreview: React.FC<{ className?: string }> = ({ className }) => {
-  const router = useRouter();
-  const { selectedTemplate, components, launchApp } = useStudioStore();
+  const { selectedTemplate, components, isLaunched, setIsLaunched } = useStudioStore();
   
   if (!selectedTemplate) {
     return (
@@ -236,8 +234,7 @@ export const LivePreview: React.FC<{ className?: string }> = ({ className }) => 
   const mockData = getMockData();
   
   const handleLaunch = () => {
-    const appId = launchApp();
-    router.push(`/app/${appId}`);
+    setIsLaunched(true);
   };
   
   return (
@@ -259,42 +256,62 @@ export const LivePreview: React.FC<{ className?: string }> = ({ className }) => 
       
       {/* Preview content */}
       <div className="flex-1 overflow-auto p-4 bg-muted/30">
-        <div className="space-y-4">
-          {/* KPI Cards */}
-          {hasKPI && (
-            <div className="grid grid-cols-3 gap-3">
-              {mockData.kpis.map((kpi, i) => (
-                <KPICard key={i} {...kpi} />
-              ))}
-            </div>
-          )}
-          
-          {/* Graph */}
-          {hasGraph && (
-            <Graph
-              data={mockData.graphData}
-              title={`${selectedTemplate.name} Overview`}
-              variant="bordered"
-            />
-          )}
-          
-          {/* Data Table */}
-          {hasTable && (
-            <DataTable
-              columns={mockData.tableColumns}
-              rows={mockData.tableRows}
-            />
-          )}
-          
-          {/* Empty state if no components */}
-          {enabledComponents.length === 0 && (
-            <div className="flex items-center justify-center h-48 border-2 border-dashed border-border rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Enable components to see preview
+        {isLaunched ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center p-8 bg-card rounded-lg border border-border shadow-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                <Rocket className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">App Launched!</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your {selectedTemplate.name} app is now live.
               </p>
+              <button
+                onClick={() => setIsLaunched(false)}
+                className="text-sm text-primary hover:underline"
+              >
+                Back to preview
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* KPI Cards */}
+            {hasKPI && (
+              <div className="grid grid-cols-3 gap-3">
+                {mockData.kpis.map((kpi, i) => (
+                  <KPICard key={i} {...kpi} />
+                ))}
+              </div>
+            )}
+            
+            {/* Graph */}
+            {hasGraph && (
+              <Graph
+                data={mockData.graphData}
+                title={`${selectedTemplate.name} Overview`}
+                variant="bordered"
+              />
+            )}
+            
+            {/* Data Table */}
+            {hasTable && (
+              <DataTable
+                columns={mockData.tableColumns}
+                rows={mockData.tableRows}
+              />
+            )}
+            
+            {/* Empty state if no components */}
+            {enabledComponents.length === 0 && (
+              <div className="flex items-center justify-center h-48 border-2 border-dashed border-border rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Enable components to see preview
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
